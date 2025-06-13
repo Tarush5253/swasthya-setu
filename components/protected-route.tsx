@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  allowedRoles?: Array<"user" | "hospital" | "bloodbank">
+  allowedRoles?: Array<"user" | "hospital_admin" | "bloodbank_admin">
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -25,10 +25,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         case "user":
           router.push("/dashboard/user")
           break
-        case "hospital":
+        case "hospital_admin":
           router.push("/dashboard/hospital")
           break
-        case "bloodbank":
+        case "bloodbank_admin":
           router.push("/dashboard/blood-bank")
           break
         default:

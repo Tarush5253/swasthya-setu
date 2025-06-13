@@ -14,7 +14,7 @@ export default function BloodBankDashboardPage() {
   const { user } = useAuth()
 
   return (
-    <ProtectedRoute allowedRoles={["bloodbank"]}>
+    <ProtectedRoute allowedRoles={["bloodbank_admin"]}>
       <div className="flex min-h-screen flex-col">
         <BloodBankDashboardHeader />
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
