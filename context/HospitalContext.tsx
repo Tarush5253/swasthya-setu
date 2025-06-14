@@ -52,11 +52,36 @@ interface BedRequest {
   user: string          // User ID who made the request
 }
 
+interface BloodRequest {
+  _id: string
+  __v: number
+  patientName: string
+  patientAge: number
+  patientGender: 'male' | 'female' | 'other'
+  contactNumber: string
+  bloodGroup: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-'
+  units: number
+  purpose: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Completed'
+  createdAt: string | Date
+  bloodBank: {
+    _id: string
+    name?: string        // Optional as it might not be populated
+    location?: string   // Optional as it might not be populated
+    contact?: string    // Optional as it might not be populated
+  }
+  user: string          // User ID who made the request
+  hospitalName: string  // Added from your image data
+}
+
+
 interface HospitalContextType {
   hospitals: Hospital[]
   bedData: BedData
   bloodBanks: BloodBank[]
   patientRequests: BedRequest[]
+  bloodRequests : BloodRequest[]
   loading: boolean
   error: string | null
   fetchBedData: () => Promise<void>
@@ -64,7 +89,9 @@ interface HospitalContextType {
   createBedRequest: (data: BedRequestFormData, hospitalId: string) => Promise<boolean>
   createBloodRequest: (data: BloodRequestFormData, hospitalId: string) => Promise<boolean>
   fetchPatientRequests: () => Promise<void>
+  fetchBloodRequests : ()=>Promise<void>
   updateRequestStatus: (requestId: string, status: string) => Promise<void>
+  updateBloodRequestStatus :  (requestId: string, status: string) => Promise<void>
 }
 export interface Hospital {
   _id: string;
@@ -108,24 +135,6 @@ interface BloodRequestFormData {
   hospitalName: string;
 }
 
-interface BloodRequestResponse {
-  success: boolean;
-  data: {
-    _id: string;
-    patientName: string;
-    patientAge: number;
-    patientGender: string;
-    contactNumber: string;
-    bloodGroup: string;
-    units: number;
-    purpose: string;
-    priority: string;
-    hospitalName: string;
-    status: string;
-    createdAt: string;
-  };
-  message: string;
-}
 
 interface BedRequestFormData {
   patientName: string;
@@ -149,6 +158,7 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
   const [hospitals, setHospitals] = useState<Hospital[]>([])
   const [bloodBanks, setBloodBank] = useState<BloodBank[]>([])
   const [patientRequests, setPatientRequests] = useState<BedRequest[]>([])
+  const [ bloodRequests , setBloodRequests] = useState<BloodRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -215,6 +225,29 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
       if (response.status == 200) {
         console.log(response)
         setPatientRequests(response.data)
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch patient requests',
+        variant: 'destructive'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+   const fetchBloodRequests = useCallback(async () => {
+    setLoading(true)
+    const token = getLocalStorage("swasthyasetu_token")
+    try {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      const response = await api.get(`/requests//hospital-blood-requests`)
+      if (response.status == 200) {
+        console.log(response)
+        setBloodRequests(response.data)
       }
 
     } catch (err) {
@@ -329,6 +362,35 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, [setAuthToken])
 
+  const updateBloodRequestStatus = useCallback(async (requestId: string, status: string) => {
+    setLoading(true)
+    setAuthToken()
+    try {
+      const response = await api.patch(`/requests/blood-requests/${requestId}`, { status })
+
+      if (response.status == 200) {
+        const updatedRequest = response.data;
+        setBloodRequests(prev =>
+          prev.map(req => req._id === updatedRequest._id ? updatedRequest : req)
+        )
+        toast({
+          title: 'Success',
+          description: 'Request status updated successfully'
+        })
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      toast({
+        title: 'Error',
+        description: 'Failed to update request status',
+        variant: 'destructive'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [setAuthToken])
+
   // Initial data fetch
   useEffect(() => {
     fetchBedData()
@@ -347,7 +409,10 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     fetchBloodData,
     bloodBanks,
     createBedRequest,
-    createBloodRequest
+    createBloodRequest,
+    fetchBloodRequests,
+    bloodRequests,
+    updateBloodRequestStatus
   }
 
   return (

@@ -99,7 +99,7 @@ export function BloodBankAnalytics() {
           <CardContent>
             <div className="flex flex-col md:flex-row gap-4">
               <div className="w-full md:w-1/2">
-                <ChartContainer className="h-[300px]">
+                {/* <ChartContainer className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -119,10 +119,10 @@ export function BloodBankAnalytics() {
                       <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
-                </ChartContainer>
+                </ChartContainer> */}
               </div>
               <div className="w-full md:w-1/2">
-                <ChartContainer className="h-[300px]">
+                {/* <ChartContainer className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={currentStock}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -132,7 +132,7 @@ export function BloodBankAnalytics() {
                       <Bar dataKey="value" fill="#1976D2" />
                     </BarChart>
                   </ResponsiveContainer>
-                </ChartContainer>
+                </ChartContainer> */}
               </div>
             </div>
           </CardContent>
