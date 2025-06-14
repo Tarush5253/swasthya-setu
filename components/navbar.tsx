@@ -8,6 +8,19 @@ import { useAuth } from "@/context/AuthContext"
 export function Navbar() {
   const { user, logout } = useAuth()
 
+  const getDashboardPath = (role: string | undefined): string => {
+    switch (role) {
+      case 'bloodbank_admin':
+        return '/dashboard/blood-bank'
+      case 'hospital_admin':
+        return '/dashboard/hospital'
+      case 'user':
+        return '/dashboard/user'
+      default:
+        return '/dashboard'
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -29,7 +42,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <Link href={`/dashboard/${user.role}`}>
+              <Link href={getDashboardPath(user.role)}>
                 <Button variant="outline" size="sm">
                   Dashboard
                 </Button>
