@@ -43,16 +43,16 @@ const updateBedAvailability = async (hospitalId: any, bedData: {
 export function BedAvailabilityForm() {
   const { user, loading, error } = useAuth();
   const [bedData, setBedData] = useState({
-    icuTotal: user?.hospitalInfo?.beds?.icu?.available || 0,
+    icuTotal: (user?.hospitalInfo?.beds?.icu?.available || 0) + (user?.hospitalInfo?.beds?.icu?.occupied || 0),
     icuAvailable: user?.hospitalInfo?.beds?.icu?.available || 0,
     icuOccupied: user?.hospitalInfo?.beds?.icu?.occupied || 0,
-    generalTotal: user?.hospitalInfo?.beds?.general?.available || 0,
+    generalTotal: (user?.hospitalInfo?.beds?.general?.available || 0) + (user?.hospitalInfo?.beds?.general?.occupied || 0),
     generalAvailable: user?.hospitalInfo?.beds?.general?.available || 0,
     generalOccupied: user?.hospitalInfo?.beds?.general?.occupied || 0,
-    emergencyTotal: user?.hospitalInfo?.beds?.emergency?.available || 0,
+    emergencyTotal: (user?.hospitalInfo?.beds?.emergency?.available || 0) + (user?.hospitalInfo?.beds?.emergency?.occupied || 0),
     emergencyAvailable: user?.hospitalInfo?.beds?.emergency?.available || 0,
     emergencyOccupied: user?.hospitalInfo?.beds?.emergency?.occupied || 0,
-    pediatricTotal: user?.hospitalInfo?.beds?.pediatric?.available || 0,
+    pediatricTotal: (user?.hospitalInfo?.beds?.pediatric?.available || 0) + (user?.hospitalInfo?.beds?.pediatric?.occupied || 0),
     pediatricAvailable: user?.hospitalInfo?.beds?.pediatric?.available || 0,
     pediatricOccupied: user?.hospitalInfo?.beds?.pediatric?.occupied || 0,
   });

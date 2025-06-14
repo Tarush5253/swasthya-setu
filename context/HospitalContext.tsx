@@ -2,6 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { toast } from '@/components/ui/use-toast'
+import axios from 'axios';
+import { getLocalStorage } from '@/lib/local-storage';
+
+
+
 
 interface BedData {
   icu: {
@@ -42,14 +47,24 @@ interface BedRequest {
 }
 
 interface HospitalContextType {
+  hospitals : Hospital[]
   bedData: BedData
   patientRequests: BedRequest[]
   loading: boolean
   error: string | null
   fetchBedData: () => Promise<void>
-  updateBedAvailability: (bedType: keyof BedData, available: number) => Promise<void>
   fetchPatientRequests: () => Promise<void>
   updateRequestStatus: (requestId: string, status: string) => Promise<void>
+}
+export interface Hospital {
+  _id: string;
+  name: string;
+  location: string;
+  contact: string;
+  beds: BedData;
+  facilities: string[];
+  admin: string;
+  __v?: number;
 }
 
 const HospitalContext = createContext<HospitalContextType | undefined>(undefined)
@@ -61,18 +76,25 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     emergency: { total: 0, available: 0, occupied: 0 },
     pediatric: { total: 0, available: 0, occupied: 0 }
   })
+  const [hospitals , setHospitals] = useState<Hospital[]>([])
   const [patientRequests, setPatientRequests] = useState<BedRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const api = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api',
+  })
+
 
   // Fetch initial bed data
   const fetchBedData = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/hospital/beds')
-      if (!response.ok) throw new Error('Failed to fetch bed data')
-      const data = await response.json()
-      setBedData(data)
+      const response = await api.get(`/hospitals`)
+      if (response.status == 200) {
+        console.log(response.data)
+        setHospitals(response.data)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       toast({
@@ -85,50 +107,18 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, [])
 
-  // Update bed availability
-  const updateBedAvailability = useCallback(async (bedType: keyof BedData, available: number) => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/hospital/beds', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ bedType, available })
-      })
-      
-      if (!response.ok) throw new Error('Failed to update bed data')
-      
-      const updatedData = await response.json()
-      setBedData(prev => ({
-        ...prev,
-        [bedType]: updatedData
-      }))
-      
-      toast({
-        title: 'Success',
-        description: 'Bed availability updated successfully'
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
-      toast({
-        title: 'Error',
-        description: 'Failed to update bed data',
-        variant: 'destructive'
-      })
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
   // Fetch patient requests
   const fetchPatientRequests = useCallback(async () => {
     setLoading(true)
+    const token = getLocalStorage("swasthyasetu_token")
     try {
-      const response = await fetch('/api/bed-requests')
-      if (!response.ok) throw new Error('Failed to fetch patient requests')
-      const data = await response.json()
-      setPatientRequests(data)
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      const response = await api.get(`/requests//hospital-bed-requests`)
+      if (response.status == 200) {
+        console.log(response)
+        setPatientRequests(response.data)
+      }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       toast({
@@ -152,14 +142,14 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
         },
         body: JSON.stringify({ status })
       })
-      
+
       if (!response.ok) throw new Error('Failed to update request status')
-      
+
       const updatedRequest = await response.json()
-      setPatientRequests(prev => 
+      setPatientRequests(prev =>
         prev.map(req => req._id === updatedRequest._id ? updatedRequest : req)
       )
-      
+
       toast({
         title: 'Success',
         description: 'Request status updated successfully'
@@ -188,9 +178,9 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     loading,
     error,
     fetchBedData,
-    updateBedAvailability,
     fetchPatientRequests,
-    updateRequestStatus
+    updateRequestStatus,
+    hospitals
   }
 
   return (
