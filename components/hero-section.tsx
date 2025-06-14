@@ -8,7 +8,7 @@ import {useAuth} from '@/context/AuthContext'
 export function HeroSection() {
   const {user} = useAuth()
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
+    <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-br from-[#D5EAEB] to-[#FFFFFF] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container px-4 md:px-6">
         <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
           <div className="flex flex-col justify-center space-y-4">
@@ -23,7 +23,7 @@ export function HeroSection() {
             </div>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <Link href="/search">
-                <Button size="lg" className="bg-primary">
+                <Button size="lg" className="bg-[#F4CDCD] text-black">
                   Check ICU Beds
                 </Button>
               </Link>

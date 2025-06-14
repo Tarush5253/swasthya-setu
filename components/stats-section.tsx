@@ -1,6 +1,6 @@
 export function StatsSection() {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
+    <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/40 bg-gradient-to-br to-[#FFE8F4] from-[#FFFFFF] ">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
