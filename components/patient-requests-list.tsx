@@ -1,60 +1,94 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useHospital } from '@/context/HospitalContext'
+import { useEffect, useState } from "react";
+import { useToast } from "@/components/ui/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+
+interface BedRequest {
+  _id: string
+  _v: number
+  patientName: string
+  patientAge: number
+  patientGender: string
+  contactNumber: string
+  bedType: string
+  medicalCondition: string
+  priority: "low" | "medium" | "high" | "critical"
+  status: "Pending" | "Approved" | "Rejected"
+  timestamp: string | Date
+  hospital: {
+    _id: string
+    name?: string
+    location?: string
+    contact?: string
+  }
+  user: string
+}
 
 export function PatientRequestsList() {
-  // This would typically come from an API
-  const requests = [
-    {
-      id: "PR-001",
-      patientName: "Rahul Sharma",
-      requestType: "ICU Bed",
-      requestDate: "2023-06-12 09:15 AM",
-      priority: "High",
-      status: "Pending",
-    },
-    {
-      id: "PR-002",
-      patientName: "Priya Patel",
-      requestType: "General Bed",
-      requestDate: "2023-06-12 10:30 AM",
-      priority: "Medium",
-      status: "Pending",
-    },
-    {
-      id: "PR-003",
-      patientName: "Amit Kumar",
-      requestType: "Emergency Bed",
-      requestDate: "2023-06-12 08:45 AM",
-      priority: "Critical",
-      status: "Pending",
-    },
-    {
-      id: "PR-004",
-      patientName: "Neha Singh",
-      requestType: "ICU Bed",
-      requestDate: "2023-06-11 11:20 PM",
-      priority: "High",
-      status: "Approved",
-    },
-    {
-      id: "PR-005",
-      patientName: "Vikram Mehta",
-      requestType: "Pediatric Bed",
-      requestDate: "2023-06-11 07:30 PM",
-      priority: "Medium",
-      status: "Rejected",
-    },
-  ]
+  const { fetchPatientRequests, patientRequests, loading, updateRequestStatus } = useHospital();
+  const { toast } = useToast();
+  const [selectedRequest, setSelectedRequest] = useState<BedRequest | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+
+  useEffect(() => {
+    fetchPatientRequests();
+  }, [fetchPatientRequests]);
+
+  const handleStatusUpdate = async (requestId: string, status: "Approved" | "Rejected") => {
+    try {
+      await updateRequestStatus(requestId, status);
+      toast({
+        title: "Success",
+        description: `Request ${status.toLowerCase()} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update request status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleViewRequest = (request: BedRequest) => {
+    setSelectedRequest(request);
+    setIsViewDialogOpen(true);
+  };
+
+  if (loading || !patientRequests) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <div className="flex flex-1 justify-center items-center">
+          <div>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (patientRequests.length === 0) {
+    return (
+      <div className="rounded-md border p-4">
+        <p className="text-center text-muted-foreground">No requests found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Request ID</TableHead>
             <TableHead>Patient Name</TableHead>
-            <TableHead>Request Type</TableHead>
+            <TableHead>Bed Type</TableHead>
+            <TableHead>Medical Condition</TableHead>
             <TableHead>Date & Time</TableHead>
             <TableHead>Priority</TableHead>
             <TableHead>Status</TableHead>
@@ -62,20 +96,20 @@ export function PatientRequestsList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {requests.map((request) => (
-            <TableRow key={request.id}>
-              <TableCell className="font-medium">{request.id}</TableCell>
-              <TableCell>{request.patientName}</TableCell>
-              <TableCell>{request.requestType}</TableCell>
-              <TableCell>{request.requestDate}</TableCell>
+          {(patientRequests as BedRequest[]).map((request) => (
+            <TableRow key={request._id}>
+              <TableCell className="font-medium">{request.patientName}</TableCell>
+              <TableCell>{request.bedType}</TableCell>
+              <TableCell>{request.medicalCondition}</TableCell>
+              <TableCell>{new Date(request.timestamp).toLocaleString()}</TableCell>
               <TableCell>
                 <Badge
                   variant={
-                    request.priority === "Critical"
+                    request.priority === "high"
                       ? "destructive"
-                      : request.priority === "High"
-                        ? "default"
-                        : "outline"
+                      : request.priority === "medium"
+                      ? "default"
+                      : "outline"
                   }
                 >
                   {request.priority}
@@ -84,7 +118,11 @@ export function PatientRequestsList() {
               <TableCell>
                 <Badge
                   variant={
-                    request.status === "Approved" ? "success" : request.status === "Pending" ? "outline" : "destructive"
+                    request.status === "Approved" 
+                      ? "default" 
+                      : request.status === "Pending" 
+                        ? "outline" 
+                        : "destructive"
                   }
                 >
                   {request.status}
@@ -93,13 +131,26 @@ export function PatientRequestsList() {
               <TableCell className="text-right">
                 {request.status === "Pending" ? (
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleStatusUpdate(request._id, "Rejected")}
+                    >
                       Reject
                     </Button>
-                    <Button size="sm">Approve</Button>
+                    <Button 
+                      size="sm"
+                      onClick={() => handleStatusUpdate(request._id, "Approved")}
+                    >
+                      Approve
+                    </Button>
                   </div>
                 ) : (
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewRequest(request)}
+                  >
                     View
                   </Button>
                 )}
@@ -108,6 +159,81 @@ export function PatientRequestsList() {
           ))}
         </TableBody>
       </Table>
+
+      {/* View Request Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Patient Request Details</DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Patient Name</p>
+                  <p>{selectedRequest.patientName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Age</p>
+                  <p>{selectedRequest.patientAge}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Gender</p>
+                  <p>{selectedRequest.patientGender}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Contact Number</p>
+                  <p>{selectedRequest.contactNumber}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Bed Type</p>
+                <p>{selectedRequest.bedType}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Medical Condition</p>
+                <p>{selectedRequest.medicalCondition}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Priority</p>
+                  <Badge
+                    variant={
+                      selectedRequest.priority === "high"
+                        ? "destructive"
+                        : selectedRequest.priority === "medium"
+                        ? "default"
+                        : "outline"
+                    }
+                  >
+                    {selectedRequest.priority}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <Badge
+                    variant={
+                      selectedRequest.status === "Approved" 
+                        ? "default" 
+                        : selectedRequest.status === "Pending" 
+                          ? "outline" 
+                          : "destructive"
+                    }
+                  >
+                    {selectedRequest.status}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Request Date & Time</p>
+                <p>{new Date(selectedRequest.timestamp).toLocaleString()}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }

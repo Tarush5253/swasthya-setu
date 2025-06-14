@@ -1,8 +1,12 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { HeroIllustration } from "@/components/hero-illustration"
+import {useAuth} from '@/context/AuthContext'
 
 export function HeroSection() {
+  const {user} = useAuth()
   return (
     <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
       <div className="container px-4 md:px-6">
@@ -28,11 +32,11 @@ export function HeroSection() {
                   Check Blood Stock
                 </Button>
               </Link>
-              <Link href="/login">
+              {!user && <Link href="/login">
                 <Button size="lg" variant="outline">
                   Login
                 </Button>
-              </Link>
+              </Link>}
             </div>
           </div>
           <div className="flex items-center justify-center">

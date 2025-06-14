@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useAuth } from "@/context/AuthContext"
+import { useHospital } from "@/context/HospitalContext"
 import { toast } from "@/components/ui/use-toast"
 
 interface BedRequestFormProps {
@@ -21,6 +22,7 @@ interface BedRequestFormProps {
 
 export function BedRequestForm({ hospitalId, hospitalName, onClose }: BedRequestFormProps) {
   const { user } = useAuth()
+  const { createBedRequest } = useHospital();
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     patientName: user?.name || "",
@@ -42,28 +44,46 @@ export function BedRequestForm({ hospitalId, hospitalName, onClose }: BedRequest
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+
+    // Validate contact number
+    if (!/^\d{10}$/.test(formData.contactNumber)) {
+      toast({
+        title: "Invalid Contact Number",
+        description: "Please enter a valid 10-digit phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      // In a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const response = await createBedRequest({
+          ...formData,
+          patientAge: Number(formData.patientAge),
+        } , hospitalId)
+        
+      if (!response) {
+        throw new Error('Failed to submit request');
+      }
 
       toast({
         title: "Bed request submitted",
         description: `Your bed request at ${hospitalName} has been submitted successfully.`,
-      })
-      onClose()
-    } catch (error) {
+      });
+      onClose();
+    } catch (error: any) {
+      console.error('Bed request error:', error);
       toast({
         title: "Request failed",
-        description: "There was an error submitting your request. Please try again.",
+        description: error.message || "There was an error submitting your request. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit}>

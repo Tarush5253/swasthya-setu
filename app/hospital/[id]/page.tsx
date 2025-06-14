@@ -12,8 +12,10 @@ import { MapPin, Phone, Clock, Star, Info, Calendar } from "lucide-react"
 import { BedRequestForm } from "@/components/bed-request-form"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/context/AuthContext"
-import { toast } from "@/components/ui/use-toast"
+// import { toast } from "@/components/ui/use-toast"
 import { useHospital } from '@/context/HospitalContext'
+import { useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/use-toast"
 
 interface BedData {
   icu: {
@@ -53,7 +55,10 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
   const { user } = useAuth()
   const { hospitals, fetchBedData, loading } = useHospital();
   const [hospital, setHospital] = useState<Hospital | null>(null);
-  const [showRequestForm, setShowRequestForm] = useState(false)
+  const [showRequestForm, setShowRequestForm] = useState(false);
+
+  const { toast } = useToast()
+  const router = useRouter();
 
   useEffect(() => {
     fetchBedData();
@@ -87,20 +92,31 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
     },
   ]
 
+
+
   const handleRequestBed = () => {
     if (!user) {
       toast({
         title: "Login Required",
         description: "Please login to request a bed.",
         variant: "destructive",
-      })
-      alert("Login Required")
-    setShowRequestForm(false)
-    } else {
-      setShowRequestForm(true)
+      });
+      router.push('/login');
+      return;
     }
 
-  }
+    if (user.role !== 'user') {
+      toast({
+        title: "Access Denied",
+        description: "Only regular users can request beds.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setShowRequestForm(true);
+  };
+
 
   if (loading || !hospital) {
     return (
@@ -141,11 +157,29 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
                   <Button onClick={handleRequestBed}>Request Bed</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
-                  <BedRequestForm
-                    hospitalId={hospital._id}
-                    hospitalName={hospital.name}
-                    onClose={() => setShowRequestForm(false)}
-                  />
+                  {user && user.role === 'user' ? (
+                    <BedRequestForm
+                      hospitalId={hospital._id}
+                      hospitalName={hospital.name}
+                      onClose={() => setShowRequestForm(false)}
+                    />
+                  ) : (
+                    <div className="p-4 text-center">
+                      <p>
+                        {!user
+                          ? "Please login as a user to request a bed."
+                          : "Only regular users can request beds."}
+                      </p>
+                      {!user && (
+                        <Button
+                          onClick={() => router.push('/login')}
+                          className="mt-4"
+                        >
+                          Go to Login
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </DialogContent>
               </Dialog>
             </div>

@@ -33,17 +33,23 @@ interface BedData {
 
 interface BedRequest {
   _id: string
+  _v: number
   patientName: string
-  requestType: string
-  priority: string
-  status: string
-  timestamp: Date
+  patientAge: number
+  patientGender: string
+  contactNumber: string
+  bedType: string
+  medicalCondition: string
+  priority: "low" | "medium" | "high" | "critical"
+  status: "Pending" | "Approved" | "Rejected"
+  timestamp: string | Date
   hospital: {
     _id: string
-    name: string
-    location: string
-    contact: string
+    name?: string        // Optional as it might not be populated
+    location?: string   // Optional as it might not be populated
+    contact?: string    // Optional as it might not be populated
   }
+  user: string          // User ID who made the request
 }
 
 interface HospitalContextType {
@@ -55,6 +61,7 @@ interface HospitalContextType {
   error: string | null
   fetchBedData: () => Promise<void>
   fetchBloodData: () => Promise<void>
+  createBedRequest: (data: BedRequestFormData, hospitalId: string) => Promise<boolean>
   fetchPatientRequests: () => Promise<void>
   updateRequestStatus: (requestId: string, status: string) => Promise<void>
 }
@@ -86,6 +93,16 @@ export interface BloodBank {
     O_pos: number;
   };
   __v?: number;
+}
+
+interface BedRequestFormData {
+  patientName: string;
+  patientAge: number;
+  patientGender: string;
+  contactNumber: string;
+  bedType: string;
+  priority: string;
+  medicalCondition: string;
 }
 
 const HospitalContext = createContext<HospitalContextType | undefined>(undefined)
@@ -149,6 +166,13 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, [])
 
+  const setAuthToken = useCallback(() => {
+    const token = getLocalStorage("swasthyasetu_token")
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    }
+  }, [])
+
   // Fetch patient requests
   const fetchPatientRequests = useCallback(async () => {
     setLoading(true)
@@ -173,29 +197,67 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, [])
 
+
+  const createBedRequest = useCallback(async (data: BedRequestFormData, hospitalId: string) => {
+    setLoading(true)
+    setAuthToken()
+    try {
+      const response = await api.post(`/requests/${hospitalId}`, {
+        ...data,
+      })
+
+      if (response.status === 201) {
+        toast({
+          title: 'Success',
+          description: 'Bed request submitted successfully',
+        })
+        // Refresh requests list
+        await fetchPatientRequests()
+        return true
+      }
+      return false
+    } catch (err) {
+      handleApiError(err, 'Failed to submit bed request')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }, [fetchPatientRequests, setAuthToken])
+
+  const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
+    let message = defaultMessage
+    if (axios.isAxiosError(err)) {
+      message = err.response?.data?.message || err.message || defaultMessage
+    } else if (err instanceof Error) {
+      message = err.message
+    }
+
+    setError(message)
+    toast({
+      title: 'Error',
+      description: message,
+      variant: 'destructive'
+    })
+  }, [])
+
   // Update request status
   const updateRequestStatus = useCallback(async (requestId: string, status: string) => {
     setLoading(true)
+    setAuthToken()
     try {
-      const response = await fetch(`/api/bed-requests/${requestId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      })
+      const response = await api.patch(`/requests/bed-requests/${requestId}`, { status })
 
-      if (!response.ok) throw new Error('Failed to update request status')
+      if (response.status == 200) {
+        const updatedRequest = response.data;
+        setPatientRequests(prev =>
+          prev.map(req => req._id === updatedRequest._id ? updatedRequest : req)
+        )
+        toast({
+          title: 'Success',
+          description: 'Request status updated successfully'
+        })
+      }
 
-      const updatedRequest = await response.json()
-      setPatientRequests(prev =>
-        prev.map(req => req._id === updatedRequest._id ? updatedRequest : req)
-      )
-
-      toast({
-        title: 'Success',
-        description: 'Request status updated successfully'
-      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       toast({
@@ -206,7 +268,7 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [setAuthToken])
 
   // Initial data fetch
   useEffect(() => {
@@ -224,7 +286,8 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     updateRequestStatus,
     hospitals,
     fetchBloodData,
-    bloodBanks
+    bloodBanks,
+    createBedRequest
   }
 
   return (
