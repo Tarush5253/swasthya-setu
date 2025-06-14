@@ -9,22 +9,53 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "@/components/ui/use-toast"
+import { useAuth } from "@/context/AuthContext"
+import { getLocalStorage } from "@/lib/local-storage"
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api',
+})
+
+
+const updateBedAvailability = async (hospitalId: any, bedData: {
+  icu: { available: number, occupied: number },
+  general: { available: number, occupied: number },
+  emergency: { available: number, occupied: number },
+  pediatric: { available: number, occupied: number }
+}) => {
+  const token = getLocalStorage("swasthyasetu_token")
+  try {
+
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    const { data } = await api.put(`/hospitals/${hospitalId}/beds`, { beds: bedData })
+
+    return data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Failed to update bed availability');
+    }
+    console.log(error)
+    throw new Error('An unexpected error occurred');
+  }
+};
 
 export function BedAvailabilityForm() {
+  const { user, loading, error } = useAuth();
   const [bedData, setBedData] = useState({
-    icuTotal: 20,
-    icuAvailable: 5,
-    icuOccupied: 15,
-    generalTotal: 100,
-    generalAvailable: 25,
-    generalOccupied: 75,
-    emergencyTotal: 10,
-    emergencyAvailable: 3,
-    emergencyOccupied: 7,
-    pediatricTotal: 15,
-    pediatricAvailable: 8,
-    pediatricOccupied: 7,
-  })
+    icuTotal: user?.hospitalInfo?.beds?.icu?.available || 0,
+    icuAvailable: user?.hospitalInfo?.beds?.icu?.available || 0,
+    icuOccupied: user?.hospitalInfo?.beds?.icu?.occupied || 0,
+    generalTotal: user?.hospitalInfo?.beds?.general?.available || 0,
+    generalAvailable: user?.hospitalInfo?.beds?.general?.available || 0,
+    generalOccupied: user?.hospitalInfo?.beds?.general?.occupied || 0,
+    emergencyTotal: user?.hospitalInfo?.beds?.emergency?.available || 0,
+    emergencyAvailable: user?.hospitalInfo?.beds?.emergency?.available || 0,
+    emergencyOccupied: user?.hospitalInfo?.beds?.emergency?.occupied || 0,
+    pediatricTotal: user?.hospitalInfo?.beds?.pediatric?.available || 0,
+    pediatricAvailable: user?.hospitalInfo?.beds?.pediatric?.available || 0,
+    pediatricOccupied: user?.hospitalInfo?.beds?.pediatric?.occupied || 0,
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -34,14 +65,14 @@ export function BedAvailabilityForm() {
       const newData = { ...prev, [name]: numValue }
 
       // Update occupied beds based on total and available
-      if (name.includes("Total") || name.includes("Available")) {
-        const bedType = name.replace("Total", "").replace("Available", "")
-        const total = name.includes("Total") ? numValue : prev[`${bedType}Total` as keyof typeof prev]
+      if (name.includes("Occupied") || name.includes("Available")) {
+        const bedType = name.replace("Occupied", "").replace("Available", "")
+        const Occupied = name.includes("Occupied") ? numValue : prev[`${bedType}Occupied` as keyof typeof prev]
         const available = name.includes("Available") ? numValue : prev[`${bedType}Available` as keyof typeof prev]
 
         return {
           ...newData,
-          [`${bedType}Occupied`]: Math.max(0, (total as number) - (available as number)),
+          [`${bedType}Total`]: Math.max(0, (Occupied as number) + (available as number)),
         }
       }
 
@@ -49,14 +80,45 @@ export function BedAvailabilityForm() {
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Here you would typically send the data to your backend
-    toast({
-      title: "Bed availability updated",
-      description: "The bed availability information has been updated successfully.",
-    })
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const updatedData = await updateBedAvailability(user?.id, {
+        icu: {
+          available: bedData.icuAvailable,
+          occupied: bedData.icuOccupied
+        },
+        general: {
+          available: bedData.generalAvailable,
+          occupied: bedData.generalOccupied
+        },
+        emergency: {
+          available: bedData.emergencyAvailable,
+          occupied: bedData.emergencyOccupied
+        },
+        pediatric: {
+          available: bedData.pediatricAvailable,
+          occupied: bedData.pediatricOccupied
+        }
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Bed availability updated successfully',
+        variant: 'default'
+      });
+
+      // Update local state if needed
+      setBedData(updatedData.hospital.beds);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
 
   return (
     <form onSubmit={handleSubmit}>
@@ -70,14 +132,9 @@ export function BedAvailabilityForm() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="icuTotal">Total</Label>
-                    <Input
-                      id="icuTotal"
-                      name="icuTotal"
-                      type="number"
-                      value={bedData.icuTotal}
-                      onChange={handleInputChange}
-                    />
+                    <Input id="icuTotal" type="number" value={bedData.icuTotal} disabled />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="icuAvailable">Available</Label>
                     <Input
@@ -90,7 +147,13 @@ export function BedAvailabilityForm() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="icuOccupied">Occupied</Label>
-                    <Input id="icuOccupied" type="number" value={bedData.icuOccupied} disabled />
+                    <Input
+                      id="icuOccupied"
+                      name="icuOccupied"
+                      type="number"
+                      value={bedData.icuOccupied}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -100,15 +163,10 @@ export function BedAvailabilityForm() {
                 <Separator className="my-2" />
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="generalTotal">Total</Label>
-                    <Input
-                      id="generalTotal"
-                      name="generalTotal"
-                      type="number"
-                      value={bedData.generalTotal}
-                      onChange={handleInputChange}
-                    />
+                    <Label htmlFor="generalOccupied">Total</Label>
+                    <Input id="generalTotal" type="number" value={bedData.generalTotal} disabled />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="generalAvailable">Available</Label>
                     <Input
@@ -120,8 +178,14 @@ export function BedAvailabilityForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="generalOccupied">Occupied</Label>
-                    <Input id="generalOccupied" type="number" value={bedData.generalOccupied} disabled />
+                    <Label htmlFor="generalTotal">Occupied</Label>
+                    <Input
+                      id="generalOccupied"
+                      name="generalOccupied"
+                      type="number"
+                      value={bedData.generalOccupied}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -131,15 +195,10 @@ export function BedAvailabilityForm() {
                 <Separator className="my-2" />
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="emergencyTotal">Total</Label>
-                    <Input
-                      id="emergencyTotal"
-                      name="emergencyTotal"
-                      type="number"
-                      value={bedData.emergencyTotal}
-                      onChange={handleInputChange}
-                    />
+                    <Label htmlFor="emergencyOccupied">Total</Label>
+                    <Input id="emergencyTotal" type="number" value={bedData.emergencyTotal} disabled />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="emergencyAvailable">Available</Label>
                     <Input
@@ -151,8 +210,14 @@ export function BedAvailabilityForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="emergencyOccupied">Occupied</Label>
-                    <Input id="emergencyOccupied" type="number" value={bedData.emergencyOccupied} disabled />
+                    <Label htmlFor="emergencyTotal">Occupied</Label>
+                    <Input
+                      id="emergencyOccupied"
+                      name="emergencyOccupied"
+                      type="number"
+                      value={bedData.emergencyOccupied}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -163,14 +228,9 @@ export function BedAvailabilityForm() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="pediatricTotal">Total</Label>
-                    <Input
-                      id="pediatricTotal"
-                      name="pediatricTotal"
-                      type="number"
-                      value={bedData.pediatricTotal}
-                      onChange={handleInputChange}
-                    />
+                    <Input id="pediatricTotal" type="number" value={bedData.pediatricTotal} disabled />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="pediatricAvailable">Available</Label>
                     <Input
@@ -183,7 +243,13 @@ export function BedAvailabilityForm() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pediatricOccupied">Occupied</Label>
-                    <Input id="pediatricOccupied" type="number" value={bedData.pediatricOccupied} disabled />
+                    <Input
+                      id="pediatricOccupied"
+                      name="pediatricOccupied"
+                      type="number"
+                      value={bedData.pediatricOccupied}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </div>
               </div>

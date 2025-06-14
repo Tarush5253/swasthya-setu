@@ -15,11 +15,27 @@ type User = {
     name: string
     location: string
     contact: string
+    beds: {
+      icu: { available: number, occupied: number },
+      general: { available: number, occupied: number },
+      emergency: { available: number, occupied: number },
+      pediatric: { available: number, occupied: number }
+    }
   }
   bloodBankInfo?: {
     name: string
     location: string
     contact: string
+    stock: {
+      A_pos: number,
+      A_neg: number,
+      B_pos: number,
+      B_neg: number,
+      AB_pos: number,
+      AB_neg: number,
+      O_pos: number,
+      O_neg: number,
+    }
   }
 }
 
