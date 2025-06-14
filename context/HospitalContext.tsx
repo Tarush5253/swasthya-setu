@@ -62,6 +62,7 @@ interface HospitalContextType {
   fetchBedData: () => Promise<void>
   fetchBloodData: () => Promise<void>
   createBedRequest: (data: BedRequestFormData, hospitalId: string) => Promise<boolean>
+  createBloodRequest: (data: BloodRequestFormData, hospitalId: string) => Promise<boolean>
   fetchPatientRequests: () => Promise<void>
   updateRequestStatus: (requestId: string, status: string) => Promise<void>
 }
@@ -93,6 +94,37 @@ export interface BloodBank {
     O_pos: number;
   };
   __v?: number;
+}
+
+interface BloodRequestFormData {
+  patientName: string;
+  patientAge: string;
+  patientGender: string;
+  contactNumber: string;
+  bloodGroup: string;
+  units: string;
+  purpose: string;
+  priority: string;
+  hospitalName: string;
+}
+
+interface BloodRequestResponse {
+  success: boolean;
+  data: {
+    _id: string;
+    patientName: string;
+    patientAge: number;
+    patientGender: string;
+    contactNumber: string;
+    bloodGroup: string;
+    units: number;
+    purpose: string;
+    priority: string;
+    hospitalName: string;
+    status: string;
+    createdAt: string;
+  };
+  message: string;
 }
 
 interface BedRequestFormData {
@@ -224,6 +256,33 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, [fetchPatientRequests, setAuthToken])
 
+  const createBloodRequest = useCallback(async (data: BloodRequestFormData, bloodBankId: string) => {
+  setLoading(true);
+  setAuthToken(); // Your auth token setter function
+  
+  try {
+    const response = await api.post(`/requests/blood-requests/${bloodBankId}`, {
+      ...data,
+      patientAge: Number(data.patientAge),
+      units: Number(data.units)
+    });
+
+    if (response.status === 201) {
+      toast({
+        title: 'Success',
+        description: 'Blood request submitted successfully',
+      });
+      return true;
+    }
+    return false;
+  } catch (err) {
+    handleApiError(err, 'Failed to submit blood request');
+    return false;
+  } finally {
+    setLoading(false);
+  }
+}, [setAuthToken]);
+
   const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
     let message = defaultMessage
     if (axios.isAxiosError(err)) {
@@ -287,7 +346,8 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     hospitals,
     fetchBloodData,
     bloodBanks,
-    createBedRequest
+    createBedRequest,
+    createBloodRequest
   }
 
   return (

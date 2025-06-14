@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "@/components/ui/use-toast"
 import { useHospital } from '@/context/HospitalContext'
+import { useRouter } from "next/navigation"
 
 export interface BloodBank {
   _id: string;
@@ -39,6 +40,9 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
   const [bloodBank, setBloodBank] = useState<BloodBank>();
   const [showRequestForm, setShowRequestForm] = useState(false)
 
+
+  const router = useRouter();
+
   useEffect(() => {
     fetchBloodData();
   }, [fetchBloodData])
@@ -52,12 +56,23 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
     if (!user) {
       toast({
         title: "Login Required",
-        description: "Please login to request blood.",
+        description: "Please login to request a blood.",
         variant: "destructive",
-      })
-      return
+      });
+      router.push('/login');
+      return;
     }
-    setShowRequestForm(true)
+
+    if (user.role !== 'user') {
+      toast({
+        title: "Access Denied",
+        description: "Only regular users can request blood.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setShowRequestForm(true);
   }
 
   if (loading || !bloodBank) {
@@ -84,7 +99,6 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
               <div className="flex items-center gap-2 mt-2 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
                 <span>{bloodBank!.location}</span>
-                {/* <span className="text-sm">({bloodBank.distance})</span> */}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -93,14 +107,32 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
               </Button>
               <Dialog open={showRequestForm} onOpenChange={setShowRequestForm}>
                 <DialogTrigger asChild>
-                  <Button onClick={handleRequestBlood}>Request Blood</Button>
+                  <Button onClick={handleRequestBlood}>Request Bed</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
-                  <BloodRequestForm
-                    bloodBankId={bloodBank!._id}
-                    bloodBankName={bloodBank!.name}
-                    onClose={() => setShowRequestForm(false)}
-                  />
+                  {user && user.role === 'user' ? (
+                    <BloodRequestForm
+                      bloodBankId={bloodBank!._id}
+                      bloodBankName={bloodBank!.name}
+                      onClose={() => setShowRequestForm(false)}
+                    />
+                  ) : (
+                    <div className="p-4 text-center">
+                      <p>
+                        {!user
+                          ? "Please login as a user to request a blood."
+                          : "Only regular users can request bloods."}
+                      </p>
+                      {!user && (
+                        <Button
+                          onClick={() => router.push('/login')}
+                          className="mt-4"
+                        >
+                          Go to Login
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </DialogContent>
               </Dialog>
             </div>

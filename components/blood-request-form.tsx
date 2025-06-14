@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useAuth } from "@/context/AuthContext"
+import { useHospital } from "@/context/HospitalContext"
 import { toast } from "@/components/ui/use-toast"
 
 interface BloodRequestFormProps {
@@ -21,6 +22,7 @@ interface BloodRequestFormProps {
 
 export function BloodRequestForm({ bloodBankId, bloodBankName, onClose }: BloodRequestFormProps) {
   const { user } = useAuth()
+  const {createBloodRequest} = useHospital()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     patientName: user?.name || "",
@@ -43,29 +45,25 @@ export function BloodRequestForm({ bloodBankId, bloodBankName, onClose }: BloodR
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  const success = await createBloodRequest({
+    patientName: formData.patientName,
+    patientAge: formData.patientAge,
+    patientGender: formData.patientGender,
+    contactNumber: formData.contactNumber,
+    bloodGroup: formData.bloodGroup,
+    units: formData.units,
+    purpose: formData.purpose,
+    priority: formData.priority,
+    hospitalName: formData.hospitalName
+  }, bloodBankId);
 
-    try {
-      // In a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      toast({
-        title: "Blood request submitted",
-        description: `Your blood request at ${bloodBankName} has been submitted successfully.`,
-      })
-      onClose()
-    } catch (error) {
-      toast({
-        title: "Request failed",
-        description: "There was an error submitting your request. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+  if (success) {
+    onClose();
   }
+};
 
   return (
     <form onSubmit={handleSubmit}>
