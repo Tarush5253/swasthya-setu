@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -12,49 +12,41 @@ import { BloodRequestForm } from "@/components/blood-request-form"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "@/components/ui/use-toast"
+import { useHospital } from '@/context/HospitalContext'
+
+export interface BloodBank {
+  _id: string;
+  admin: string;
+  name: string;
+  location: string;
+  contact: string;
+  stock: {
+    AB_neg: number;
+    AB_pos: number;
+    A_neg: number;
+    A_pos: number;
+    B_neg: number;
+    B_pos: number;
+    O_neg: number;
+    O_pos: number;
+  };
+  __v?: number;
+}
 
 export default function BloodBankDetailPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
+  const { bloodBanks, fetchBloodData, loading } = useHospital()
+  const [bloodBank, setBloodBank] = useState<BloodBank>();
   const [showRequestForm, setShowRequestForm] = useState(false)
 
-  // This would typically come from an API based on the ID
-  const bloodBank = {
-    id: params.id,
-    name: "LifeSource Blood Bank",
-    address: "123 Health St, Medical District",
-    phone: "+91 98765 43210",
-    distance: "3.2 km",
-    openingHours: "8:00 AM - 8:00 PM",
-    type: "Red Cross",
-    description:
-      "LifeSource Blood Bank is dedicated to providing safe blood products to hospitals and patients in need. We follow strict quality control measures to ensure the safety of our blood products.",
-    bloodGroups: {
-      "A+": 15,
-      "A-": 8,
-      "B+": 12,
-      "B-": 5,
-      "AB+": 7,
-      "AB-": 3,
-      "O+": 20,
-      "O-": 10,
-    },
-    facilities: [
-      "Blood Collection",
-      "Component Separation",
-      "Blood Testing",
-      "Blood Storage",
-      "Blood Distribution",
-      "Donor Counseling",
-    ],
-    donationRequirements: [
-      "Age between 18-65 years",
-      "Weight above 45 kg",
-      "Hemoglobin level of at least 12.5 g/dL",
-      "No major surgery in the last 6 months",
-      "No tattoo or piercing in the last 6 months",
-      "No major illness or medication",
-    ],
-  }
+  useEffect(() => {
+    fetchBloodData();
+  }, [fetchBloodData])
+
+  useEffect(() => {
+    const foundHospital = bloodBanks.find((hospital) => hospital._id === params.id)
+    if (foundHospital) setBloodBank(foundHospital);
+  }, [bloodBanks, params.id])
 
   const handleRequestBlood = () => {
     if (!user) {
@@ -68,6 +60,19 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
     setShowRequestForm(true)
   }
 
+  if (loading || !bloodBank) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <div className="flex flex-1 justify-center items-center">
+          <div>Loading...</div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -75,11 +80,11 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
         <div className="flex flex-col gap-6">
           <div className="flex flex-col md:flex-row justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">{bloodBank.name}</h1>
+              <h1 className="text-3xl font-bold">{bloodBank!.name}</h1>
               <div className="flex items-center gap-2 mt-2 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>{bloodBank.address}</span>
-                <span className="text-sm">({bloodBank.distance})</span>
+                <span>{bloodBank!.location}</span>
+                {/* <span className="text-sm">({bloodBank.distance})</span> */}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -92,8 +97,8 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <BloodRequestForm
-                    bloodBankId={bloodBank.id}
-                    bloodBankName={bloodBank.name}
+                    bloodBankId={bloodBank!._id}
+                    bloodBankName={bloodBank!.name}
                     onClose={() => setShowRequestForm(false)}
                   />
                 </DialogContent>
@@ -115,21 +120,21 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                       <CardContent className="p-4 flex flex-col items-center justify-center">
                         <Clock className="h-5 w-5 text-muted-foreground mb-2" />
                         <p className="text-sm font-medium">Hours</p>
-                        <p className="text-sm text-muted-foreground">{bloodBank.openingHours}</p>
+                        <p className="text-sm text-muted-foreground">8:00 AM - 8:00 PM</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 flex flex-col items-center justify-center">
                         <Info className="h-5 w-5 text-muted-foreground mb-2" />
                         <p className="text-sm font-medium">Type</p>
-                        <p className="text-sm text-muted-foreground">{bloodBank.type}</p>
+                        <p className="text-sm text-muted-foreground">Red Cross</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 flex flex-col items-center justify-center">
                         <Phone className="h-5 w-5 text-muted-foreground mb-2" />
                         <p className="text-sm font-medium">Contact</p>
-                        <p className="text-sm text-muted-foreground">{bloodBank.phone}</p>
+                        <p className="text-sm text-muted-foreground">{bloodBank!.contact}</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -139,7 +144,7 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                       <CardTitle>About</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p>{bloodBank.description}</p>
+                      <p>LifeSource Blood Bank is dedicated to providing safe blood products to hospitals and patients in need. We follow strict quality control measures to ensure the safety of our blood products.</p>
                     </CardContent>
                   </Card>
 
@@ -149,7 +154,14 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
-                        {bloodBank.facilities.map((facility) => (
+                        {[
+                          "Blood Collection",
+                          "Component Separation",
+                          "Blood Testing",
+                          "Blood Storage",
+                          "Blood Distribution",
+                          "Donor Counseling",
+                        ].map((facility) => (
                           <Badge key={facility} variant="outline">
                             {facility}
                           </Badge>
@@ -166,7 +178,7 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {Object.entries(bloodBank.bloodGroups).map(([group, count]) => (
+                        {Object.entries(bloodBank!.stock).map(([group, count]) => (
                           <Card key={group}>
                             <CardContent className="p-4 flex flex-col items-center justify-center">
                               <p className="text-2xl font-bold text-primary">{group}</p>
@@ -192,7 +204,14 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                     </CardHeader>
                     <CardContent>
                       <ul className="list-disc pl-5 space-y-1">
-                        {bloodBank.donationRequirements.map((requirement) => (
+                        {[
+                          "Age between 18-65 years",
+                          "Weight above 45 kg",
+                          "Hemoglobin level of at least 12.5 g/dL",
+                          "No major surgery in the last 6 months",
+                          "No tattoo or piercing in the last 6 months",
+                          "No major illness or medication",
+                        ].map((requirement) => (
                           <li key={requirement}>{requirement}</li>
                         ))}
                       </ul>
@@ -242,11 +261,11 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                 <CardContent className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{bloodBank.phone}</span>
+                    <span>{bloodBank?.contact}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{bloodBank.address}</span>
+                    <span>{bloodBank?.location}</span>
                   </div>
                 </CardContent>
               </Card>

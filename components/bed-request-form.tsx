@@ -27,7 +27,7 @@ export function BedRequestForm({ hospitalId, hospitalName, onClose }: BedRequest
     patientAge: "",
     patientGender: "male",
     contactNumber: "",
-    bedType: "normal",
+    bedType: "general",
     priority: "medium",
     medicalCondition: "",
   })
@@ -131,7 +131,7 @@ export function BedRequestForm({ hospitalId, hospitalName, onClose }: BedRequest
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="icu">ICU Bed</SelectItem>
-              <SelectItem value="normal">Normal Bed</SelectItem>
+              <SelectItem value="general">General Bed</SelectItem>
               <SelectItem value="emergency">Emergency Bed</SelectItem>
               <SelectItem value="pediatric">Pediatric Bed</SelectItem>
             </SelectContent>

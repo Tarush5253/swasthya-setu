@@ -94,9 +94,12 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
         description: "Please login to request a bed.",
         variant: "destructive",
       })
-      return
+      alert("Login Required")
+    setShowRequestForm(false)
+    } else {
+      setShowRequestForm(true)
     }
-    setShowRequestForm(true)
+
   }
 
   if (loading || !hospital) {
@@ -139,7 +142,7 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <BedRequestForm
-                    hospitalId={params.id}
+                    hospitalId={hospital._id}
                     hospitalName={hospital.name}
                     onClose={() => setShowRequestForm(false)}
                   />

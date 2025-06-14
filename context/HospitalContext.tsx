@@ -47,12 +47,14 @@ interface BedRequest {
 }
 
 interface HospitalContextType {
-  hospitals : Hospital[]
+  hospitals: Hospital[]
   bedData: BedData
+  bloodBanks: BloodBank[]
   patientRequests: BedRequest[]
   loading: boolean
   error: string | null
   fetchBedData: () => Promise<void>
+  fetchBloodData: () => Promise<void>
   fetchPatientRequests: () => Promise<void>
   updateRequestStatus: (requestId: string, status: string) => Promise<void>
 }
@@ -67,6 +69,25 @@ export interface Hospital {
   __v?: number;
 }
 
+export interface BloodBank {
+  _id: string;
+  admin: string;
+  name: string;
+  location: string;
+  contact: string;
+  stock: {
+    AB_neg: number;
+    AB_pos: number;
+    A_neg: number;
+    A_pos: number;
+    B_neg: number;
+    B_pos: number;
+    O_neg: number;
+    O_pos: number;
+  };
+  __v?: number;
+}
+
 const HospitalContext = createContext<HospitalContextType | undefined>(undefined)
 
 export const HospitalProvider = ({ children }: { children: React.ReactNode }) => {
@@ -76,7 +97,8 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     emergency: { total: 0, available: 0, occupied: 0 },
     pediatric: { total: 0, available: 0, occupied: 0 }
   })
-  const [hospitals , setHospitals] = useState<Hospital[]>([])
+  const [hospitals, setHospitals] = useState<Hospital[]>([])
+  const [bloodBanks, setBloodBank] = useState<BloodBank[]>([])
   const [patientRequests, setPatientRequests] = useState<BedRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -94,6 +116,26 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
       if (response.status == 200) {
         console.log(response.data)
         setHospitals(response.data)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch bed data',
+        variant: 'destructive'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const fetchBloodData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await api.get(`/blood-banks`)
+      if (response.status == 200) {
+        console.log(response.data)
+        setBloodBank(response.data)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -169,8 +211,8 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
   // Initial data fetch
   useEffect(() => {
     fetchBedData()
-    fetchPatientRequests()
-  }, [fetchBedData, fetchPatientRequests])
+    fetchBloodData()
+  }, [fetchBedData, fetchBloodData])
 
   const value = {
     bedData,
@@ -180,7 +222,9 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     fetchBedData,
     fetchPatientRequests,
     updateRequestStatus,
-    hospitals
+    hospitals,
+    fetchBloodData,
+    bloodBanks
   }
 
   return (
