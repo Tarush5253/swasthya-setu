@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Input } from "@/components/ui/input"
@@ -20,16 +20,46 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { HospitalList } from "@/components/hospital-list"
 import { MapPin } from "lucide-react"
+import { useHospital } from "@/context/HospitalContext"
 
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [distance, setDistance] = useState([10])
+  const [hospitalType, setHospitalType] = useState("all")
   const [filters, setFilters] = useState({
     icuAvailable: false,
     normalBedsAvailable: false,
     emergencyAvailable: false,
     pediatricAvailable: false,
   })
+
+  const { hospitals } = useHospital()
+
+  const filteredHospitals = useMemo(() => {
+    return hospitals.filter((hospital) => {
+      // Filter by search query (name or location)
+      const matchesSearch =
+        searchQuery === "" ||
+        hospital.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        hospital.location.toLowerCase().includes(searchQuery.toLowerCase())
+
+      // Filter by bed availability
+      const matchesBeds =
+        (!filters.icuAvailable || hospital.beds.icu.available > 0) &&
+        (!filters.normalBedsAvailable || hospital.beds.general.available > 0) &&
+        (!filters.emergencyAvailable || hospital.beds.emergency.available > 0) &&
+        (!filters.pediatricAvailable || hospital.beds.pediatric.available > 0)
+
+      // Filter by hospital type
+      const matchesType =
+        hospitalType === "all" ||
+        (hospitalType === "government" ) ||
+        (hospitalType === "private" ) ||
+        (hospitalType === "charity")
+
+      return matchesSearch && matchesBeds && matchesType
+    })
+  }, [hospitals, searchQuery, filters, hospitalType])
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -48,7 +78,7 @@ export default function SearchPage() {
               <CardContent className="pt-6">
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label>Location</Label>
+                    <Label>Search By Name & Location</Label>
                     <div className="flex gap-2">
                       <Input
                         placeholder="Enter your location"
@@ -69,7 +99,7 @@ export default function SearchPage() {
 
                   <div className="space-y-2">
                     <Label>Hospital Type</Label>
-                    <Select defaultValue="all">
+                    <Select value={hospitalType} onValueChange={setHospitalType}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select hospital type" />
                       </SelectTrigger>
@@ -147,7 +177,6 @@ export default function SearchPage() {
                       </div>
                     </div>
                   </div>
-
                   <Button className="w-full">Apply Filters</Button>
                 </div>
               </CardContent>
@@ -155,7 +184,7 @@ export default function SearchPage() {
 
             <div className="md:col-span-3 space-y-6">
               <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">Showing 3 hospitals near you</p>
+                <p className="text-muted-foreground">Showing {filteredHospitals.length} hospitals near you</p>
                 <Select defaultValue="distance">
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Sort by" />
@@ -171,7 +200,7 @@ export default function SearchPage() {
                 </Select>
               </div>
 
-              <HospitalList />
+              <HospitalList hospitals={filteredHospitals} />
             </div>
           </div>
         </div>

@@ -3,12 +3,34 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { MapPin, Phone } from "lucide-react"
 import Link from "next/link"
-import {useHospital} from '@/context/HospitalContext'
 
-export function HospitalList() {
+interface Hospital {
+  _id: string
+  name: string
+  location: string
+  contact: string
+  beds: {
+    icu: {
+      available: number
+    }
+    general: {
+      available: number
+    }
+    emergency?: {
+      available: number
+    }
+    pediatric?: {
+      available: number
+    }
+  }
+  type?: string
+}
 
-const {hospitals } = useHospital();
+interface HospitalListProps {
+  hospitals: Hospital[]
+}
 
+export function HospitalList({ hospitals }: HospitalListProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {hospitals.map((hospital) => (
@@ -34,6 +56,18 @@ const {hospitals } = useHospital();
                 <p className="text-muted-foreground">General Beds</p>
                 <p className="font-medium">{hospital.beds.general.available}</p>
               </div>
+              {hospital.beds.emergency && (
+                <div>
+                  <p className="text-muted-foreground">Emergency Beds</p>
+                  <p className="font-medium">{hospital.beds.emergency.available}</p>
+                </div>
+              )}
+              {hospital.beds.pediatric && (
+                <div>
+                  <p className="text-muted-foreground">Pediatric Beds</p>
+                  <p className="font-medium">{hospital.beds.pediatric.available}</p>
+                </div>
+              )}
               <div>
                 <p className="text-muted-foreground">Contact</p>
                 <p className="font-medium">{hospital.contact}</p>

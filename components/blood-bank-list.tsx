@@ -3,24 +3,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { MapPin, Phone } from "lucide-react"
 import Link from "next/link"
-import { useHospital } from '@/context/HospitalContext'
-
-interface BloodBank {
-  _id: string
-  name: string
-  location: string
-  contact?: string
-  stock?: {
-    A_pos?: number
-    A_neg?: number
-    B_pos?: number
-    B_neg?: number
-    AB_pos?: number
-    AB_neg?: number
-    O_pos?: number
-    O_neg?: number
-  }
-}
 
 const bloodGroupMap = {
   A_pos: "A+",
@@ -33,13 +15,30 @@ const bloodGroupMap = {
   O_neg: "O-"
 } as const
 
-export function BloodBankList() {
-  const { bloodBanks, loading } = useHospital()
-
-  if (loading) {
-    return <div>Loading...</div>
+interface BloodBank {
+  _id: string
+  name: string
+  location: string
+  contact?: string
+  type?: 'government' | 'private' | 'redcross' | string
+  stock?: {
+    A_pos?: number
+    A_neg?: number
+    B_pos?: number
+    B_neg?: number
+    AB_pos?: number
+    AB_neg?: number
+    O_pos?: number
+    O_neg?: number
+    [key: string]: number | undefined
   }
+}
 
+interface BloodBankListProps {
+  bloodBanks: BloodBank[]
+}
+
+export function BloodBankList({ bloodBanks }: BloodBankListProps) {
   if (!bloodBanks || bloodBanks.length === 0) {
     return <div className="text-center text-muted-foreground py-8">No blood banks found</div>
   }
@@ -50,9 +49,12 @@ export function BloodBankList() {
         // Safely process stock data
         const stockEntries = bloodBank.stock 
           ? Object.entries(bloodBank.stock)
-              .filter(([_, count]) => typeof count === 'number')
+              .filter(([group, count]) => {
+                const validGroup = group as keyof typeof bloodGroupMap
+                return typeof count === 'number' && bloodGroupMap[validGroup]
+              })
               .map(([group, count]) => [
-                bloodGroupMap[group as keyof typeof bloodGroupMap] || group, 
+                bloodGroupMap[group as keyof typeof bloodGroupMap], 
                 count as number
               ])
           : []

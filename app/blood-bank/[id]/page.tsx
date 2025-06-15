@@ -35,7 +35,7 @@ export interface BloodBank {
 }
 
 export default function BloodBankDetailPage({ params }: { params: { id: string } }) {
-  const {toast} = useToast()
+  const { toast } = useToast()
   const { user } = useAuth()
   const { bloodBanks, fetchBloodData, loading } = useHospital()
   const [bloodBank, setBloodBank] = useState<BloodBank>();
@@ -103,8 +103,15 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" className="gap-2">
-                <Phone className="h-4 w-4" /> Call
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                asChild
+              >
+                <a href={`tel:${bloodBank.contact}`}>
+                  <Phone className="h-4 w-4" /> Call
+                </a>
               </Button>
               <Dialog open={showRequestForm} onOpenChange={setShowRequestForm}>
                 <DialogTrigger asChild>
@@ -321,7 +328,7 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm">Schedule a blood donation appointment.</p>
-                  <Button className="w-full" onClick={()=> router.push('/ambulance')} variant="outline">
+                  <Button className="w-full" onClick={() => router.push('/ambulance')} variant="outline">
                     Schedule Donation
                   </Button>
                 </CardContent>

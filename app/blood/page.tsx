@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Input } from "@/components/ui/input"
@@ -20,13 +20,65 @@ import { Label } from "@/components/ui/label"
 import { BloodBankList } from "@/components/blood-bank-list"
 import { MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { useHospital } from "@/context/HospitalContext"
+
+interface BloodBank {
+  _id: string
+  name: string
+  location: string
+  contact?: string
+  type?: 'government' | 'private' | 'redcross' | string
+  stock?: {
+    A_pos?: number
+    A_neg?: number
+    B_pos?: number
+    B_neg?: number
+    AB_pos?: number
+    AB_neg?: number
+    O_pos?: number
+    O_neg?: number
+    [key: string]: number | undefined
+  }
+}
 
 export default function BloodPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [distance, setDistance] = useState([10])
   const [selectedBloodGroup, setSelectedBloodGroup] = useState<string | null>(null)
+  const [bloodBankType, setBloodBankType] = useState("all")
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+  const { bloodBanks } = useHospital()
+
+  const filteredBloodBanks = useMemo(() => {
+    return bloodBanks.filter((bloodBank: BloodBank) => {
+      // Filter by search query (name or location)
+      const matchesSearch =
+        searchQuery === "" ||
+        bloodBank.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        bloodBank.location.toLowerCase().includes(searchQuery.toLowerCase())
+
+      // Filter by blood group
+      let matchesBloodGroup = true
+      if (selectedBloodGroup) {
+        const stockKey = `${selectedBloodGroup.replace('+', '_pos').replace('-', '_neg')}`
+        matchesBloodGroup = !!(
+          bloodBank.stock && 
+          bloodBank.stock[stockKey] !== undefined && 
+          bloodBank.stock[stockKey]! > 0
+        )
+      }
+
+      // Filter by blood bank type
+      const matchesType =
+        bloodBankType === "all" ||
+        (bloodBankType === "government" ) ||
+        (bloodBankType === "private" ) ||
+        (bloodBankType === "redcross" )
+
+      return matchesSearch && matchesBloodGroup && matchesType
+    })
+  }, [bloodBanks, searchQuery, selectedBloodGroup, bloodBankType])
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -45,7 +97,7 @@ export default function BloodPage() {
               <CardContent className="pt-6">
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label>Location</Label>
+                    <Label>Search By Name & Location</Label>
                     <div className="flex gap-2">
                       <Input
                         placeholder="Enter your location"
@@ -82,7 +134,7 @@ export default function BloodPage() {
 
                   <div className="space-y-2">
                     <Label>Blood Bank Type</Label>
-                    <Select defaultValue="all">
+                    <Select value={bloodBankType} onValueChange={setBloodBankType}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select blood bank type" />
                       </SelectTrigger>
@@ -96,7 +148,6 @@ export default function BloodPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <Button className="w-full">Apply Filters</Button>
                 </div>
               </CardContent>
@@ -104,7 +155,7 @@ export default function BloodPage() {
 
             <div className="md:col-span-3 space-y-6">
               <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">Showing 3 blood banks near you</p>
+                <p className="text-muted-foreground">Showing {filteredBloodBanks.length} blood banks near you</p>
                 <Select defaultValue="distance">
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Sort by" />
@@ -119,7 +170,7 @@ export default function BloodPage() {
                 </Select>
               </div>
 
-              <BloodBankList />
+              <BloodBankList bloodBanks={filteredBloodBanks} />
             </div>
           </div>
         </div>

@@ -149,8 +149,15 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" className="gap-2">
-                <Phone className="h-4 w-4" /> Call
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                asChild
+              >
+                <a href={`tel:${hospital.contact}`}>
+                  <Phone className="h-4 w-4" /> Call
+                </a>
               </Button>
               <Dialog open={showRequestForm} onOpenChange={setShowRequestForm}>
                 <DialogTrigger asChild>
@@ -363,7 +370,7 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm">Need immediate medical attention? Contact our emergency services.</p>
-                  <Button className="w-full" onClick={()=> router.push('/emergency/tracking')} variant="destructive">
+                  <Button className="w-full" onClick={() => router.push('/emergency/tracking')} variant="destructive">
                     Emergency Request
                   </Button>
                 </CardContent>
@@ -375,7 +382,7 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm">Schedule a consultation with our specialists.</p>
-                  <Button className="w-full" onClick={()=> router.push('/ambulance')} variant="outline">
+                  <Button className="w-full" onClick={() => router.push('/ambulance')} variant="outline">
                     Book Appointment
                   </Button>
                 </CardContent>
