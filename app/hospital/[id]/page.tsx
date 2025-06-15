@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext"
 // import { toast } from "@/components/ui/use-toast"
 import { useHospital } from '@/context/HospitalContext'
 import { useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface BedData {
   icu: {
@@ -363,7 +363,7 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm">Need immediate medical attention? Contact our emergency services.</p>
-                  <Button className="w-full" variant="destructive">
+                  <Button className="w-full" onClick={()=> router.push('/emergency/tracking')} variant="destructive">
                     Emergency Request
                   </Button>
                 </CardContent>
@@ -375,7 +375,7 @@ export default function HospitalDetailPage({ params }: { params: { id: string } 
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm">Schedule a consultation with our specialists.</p>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" onClick={()=> router.push('/ambulance')} variant="outline">
                     Book Appointment
                   </Button>
                 </CardContent>

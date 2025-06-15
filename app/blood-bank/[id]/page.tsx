@@ -11,7 +11,7 @@ import { MapPin, Phone, Clock, Info } from "lucide-react"
 import { BloodRequestForm } from "@/components/blood-request-form"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/context/AuthContext"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useHospital } from '@/context/HospitalContext'
 import { useRouter } from "next/navigation"
 
@@ -35,6 +35,7 @@ export interface BloodBank {
 }
 
 export default function BloodBankDetailPage({ params }: { params: { id: string } }) {
+  const {toast} = useToast()
   const { user } = useAuth()
   const { bloodBanks, fetchBloodData, loading } = useHospital()
   const [bloodBank, setBloodBank] = useState<BloodBank>();
@@ -308,7 +309,7 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm">Need blood urgently? Submit an emergency blood request.</p>
-                  <Button className="w-full" variant="destructive">
+                  <Button className="w-full" onClick={() => router.push('/emergency/tracking')} variant="destructive">
                     Emergency Blood Request
                   </Button>
                 </CardContent>
@@ -320,7 +321,7 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-sm">Schedule a blood donation appointment.</p>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" onClick={()=> router.push('/ambulance')} variant="outline">
                     Schedule Donation
                   </Button>
                 </CardContent>

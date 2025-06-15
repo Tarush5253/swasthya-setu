@@ -25,7 +25,7 @@ export function UserDashboardHeader() {
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
           </Button>
-          <Link href="/dashboard/user" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Logo className="h-8 w-auto" />
             <span className="text-xl font-bold text-primary hidden md:inline">SwasthyaSetu</span>
           </Link>

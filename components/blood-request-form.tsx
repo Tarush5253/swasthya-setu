@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useAuth } from "@/context/AuthContext"
 import { useHospital } from "@/context/HospitalContext"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface BloodRequestFormProps {
   bloodBankId: string
@@ -21,8 +21,9 @@ interface BloodRequestFormProps {
 }
 
 export function BloodRequestForm({ bloodBankId, bloodBankName, onClose }: BloodRequestFormProps) {
+  const { toast } = useToast()
   const { user } = useAuth()
-  const {createBloodRequest} = useHospital()
+  const { createBloodRequest } = useHospital()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     patientName: user?.name || "",
@@ -45,25 +46,30 @@ export function BloodRequestForm({ bloodBankId, bloodBankName, onClose }: BloodR
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  const success = await createBloodRequest({
-    patientName: formData.patientName,
-    patientAge: formData.patientAge,
-    patientGender: formData.patientGender,
-    contactNumber: formData.contactNumber,
-    bloodGroup: formData.bloodGroup,
-    units: formData.units,
-    purpose: formData.purpose,
-    priority: formData.priority,
-    hospitalName: formData.hospitalName
-  }, bloodBankId);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (success) {
-    onClose();
-  }
-};
+    const success = await createBloodRequest({
+      patientName: formData.patientName,
+      patientAge: formData.patientAge,
+      patientGender: formData.patientGender,
+      contactNumber: formData.contactNumber,
+      bloodGroup: formData.bloodGroup,
+      units: formData.units,
+      purpose: formData.purpose,
+      priority: formData.priority,
+      hospitalName: formData.hospitalName
+    }, bloodBankId);
+
+    if (success) {
+      onClose();
+      toast({
+        title: "blood request is sucessfully send!!",
+       description: "Please wait for the response from Blood Bank",
+        variant: "destructive",
+      })
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit}>

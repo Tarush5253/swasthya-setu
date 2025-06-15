@@ -221,7 +221,7 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     const token = getLocalStorage("swasthyasetu_token")
     try {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      const response = await api.get(`/requests//hospital-bed-requests`)
+      const response = await api.get(`/requests/hospital-bed-requests`)
       if (response.status == 200) {
         console.log(response)
         setPatientRequests(response.data)
@@ -244,7 +244,7 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     const token = getLocalStorage("swasthyasetu_token")
     try {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      const response = await api.get(`/requests//hospital-blood-requests`)
+      const response = await api.get(`/requests/hospital-blood-requests`)
       if (response.status == 200) {
         console.log(response)
         setBloodRequests(response.data)
