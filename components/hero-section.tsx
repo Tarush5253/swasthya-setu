@@ -21,7 +21,7 @@ export function HeroSection() {
                 ambulance requests across multiple hospitals.
               </p>
             </div>
-            <div className="flex flex-col gap-2 min-[400px]:flex-row">
+            <div className="flex flex-col gap-2 min-[510px]:flex-row">
               <Link href="/search">
                 <Button size="lg" className="bg-[#F4CDCD] text-black">
                   Check ICU Beds
