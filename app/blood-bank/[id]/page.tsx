@@ -115,7 +115,7 @@ export default function BloodBankDetailPage({ params }: { params: { id: string }
               </Button>
               <Dialog open={showRequestForm} onOpenChange={setShowRequestForm}>
                 <DialogTrigger asChild>
-                  <Button onClick={handleRequestBlood}>Request Bed</Button>
+                  <Button onClick={handleRequestBlood}>Request Blood</Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   {user && user.role === 'user' ? (
