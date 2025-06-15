@@ -174,7 +174,6 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       const response = await api.get(`/hospitals`)
       if (response.status == 200) {
-        console.log(response.data)
         setHospitals(response.data)
       }
     } catch (err) {
@@ -194,7 +193,6 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       const response = await api.get(`/blood-banks`)
       if (response.status == 200) {
-        console.log(response.data)
         setBloodBank(response.data)
       }
     } catch (err) {
@@ -247,7 +245,6 @@ export const HospitalProvider = ({ children }: { children: React.ReactNode }) =>
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
       const response = await api.get(`/requests/hospital-blood-requests`)
       if (response.status == 200) {
-        console.log(response)
         setBloodRequests(response.data)
       }
 
