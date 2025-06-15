@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { toast } from '@/components/ui/use-toast'
+import { useToast } from "@/hooks/use-toast"
 import axios from 'axios';
 import { getLocalStorage } from '@/lib/local-storage';
 
@@ -149,6 +149,7 @@ interface BedRequestFormData {
 const HospitalContext = createContext<HospitalContextType | undefined>(undefined)
 
 export const HospitalProvider = ({ children }: { children: React.ReactNode }) => {
+  const {toast} = useToast()
   const [bedData, setBedData] = useState<BedData>({
     icu: { total: 0, available: 0, occupied: 0 },
     general: { total: 0, available: 0, occupied: 0 },

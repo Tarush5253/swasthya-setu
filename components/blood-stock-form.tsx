@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/context/AuthContext"
 import { getLocalStorage } from "@/lib/local-storage"
 import axios from "axios"
@@ -73,6 +73,7 @@ const updateBloodData = async (bloodBankId: string, stockData: BloodStock) => {
 
 export function BloodStockForm() {
   const { user } = useAuth();
+  const {toast} = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bloodStock, setBloodStock] = useState<BloodStock>({
     "A+": user?.bloodBankInfo?.stock?.A_pos || 0,

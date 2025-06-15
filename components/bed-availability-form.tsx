@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/context/AuthContext"
 import { getLocalStorage } from "@/lib/local-storage"
 import axios from 'axios';
@@ -41,6 +41,7 @@ const updateBedAvailability = async (hospitalId: any, bedData: {
 };
 
 export function BedAvailabilityForm() {
+  const {toast} = useToast()
   const { user, loading, error } = useAuth();
   const [bedData, setBedData] = useState({
     icuTotal: (user?.hospitalInfo?.beds?.icu?.available || 0) + (user?.hospitalInfo?.beds?.icu?.occupied || 0),

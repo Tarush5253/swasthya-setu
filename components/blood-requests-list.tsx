@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useHospital } from '@/context/HospitalContext'
 import { useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import {
   Dialog,
   DialogContent,
