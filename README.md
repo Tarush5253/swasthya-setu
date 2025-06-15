@@ -63,7 +63,7 @@ npm run dev
 ## 📽️ Demo & Showcase
 
 - 🔴 [Live Website](https://swasthya-setu-nu.vercel.app/)
-- 🎬 [Project Video]([https://www.linkedin.com/feed/update/urn:li:activity:7207042573787934721/](https://drive.google.com/file/d/1UFhvtgC5_hTHPyLAfhSaMBOUhvMIuK5f/view?usp=drivesdk))
+- 🎬 [Project Video](https://www.linkedin.com/feed/update/urn:li:activity:7339921892184674304/)
 - 🎨 [Design on Figma](https://www.figma.com/design/d6kSfNc6lvw97mdESElWxb/Untitled?node-id=0-1&p=f&t=vCO6wXQnMV9eZRK3-0)
 
 ---
