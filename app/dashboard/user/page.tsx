@@ -10,9 +10,11 @@ import { BloodBankList } from "@/components/blood-bank-list"
 import { RequestHistory } from "@/components/request-history"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useAuth } from "@/context/AuthContext"
+import { useHospital } from "@/context/HospitalContext"
 
 export default function UserDashboardPage() {
   const { user } = useAuth()
+  const {hospitals , bloodBanks} = useHospital()
 
   return (
     <ProtectedRoute allowedRoles={["user"]}>
@@ -47,7 +49,7 @@ export default function UserDashboardPage() {
                     <Input placeholder="Search by hospital name or location" className="flex-1" />
                     <Button>Search</Button>
                   </div>
-                  <HospitalList />
+                  <HospitalList hospitals={hospitals} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -62,7 +64,7 @@ export default function UserDashboardPage() {
                     <Input placeholder="Search by blood bank name or location" className="flex-1" />
                     <Button>Search</Button>
                   </div>
-                  <BloodBankList />
+                  <BloodBankList bloodBanks={bloodBanks} />
                 </CardContent>
               </Card>
             </TabsContent>
