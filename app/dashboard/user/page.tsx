@@ -14,7 +14,8 @@ import { useHospital } from "@/context/HospitalContext"
 
 export default function UserDashboardPage() {
   const { user } = useAuth()
-  const {hospitals , bloodBanks} = useHospital()
+
+  const { hospitals , bloodBanks} = useHospital();
 
   return (
     <ProtectedRoute allowedRoles={["user"]}>
